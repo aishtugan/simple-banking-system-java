@@ -1,0 +1,10 @@
+type: edu
+files:
+  - name: src/banking/Main.java
+    visible: true
+    learner_created: false
+  - name: test/SimpleBankSystemTest.java
+    learner_created: false
+feedback_link: https://hyperskill.org/projects/93/stages/518/implement#comment
+status: Unchecked
+record: -1

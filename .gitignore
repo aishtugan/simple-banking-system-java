@@ -1,0 +1,11 @@
+.gradle/
+build/
+out/
+.idea/
+
+*.class
+*.log
+*.db
+*.sqlite
+*.sqlite3
+*.s3db
