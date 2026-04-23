@@ -171,6 +171,29 @@ class Account {
         }
         this.pin = sb.toString();
     }
+
+    static int getCardControlSumByLuhn(String cardCutNumber) {
+        String[] digitsArray = cardCutNumber.split("");
+        int[] interimArray = new int[digitsArray.length];
+
+        //multiply odd digits by 2
+        for (int i = 0; i < digitsArray.length; i++) {
+            if(i % 2 == 0){
+                interimArray[i] = 2 * Integer.parseInt(digitsArray[i]);
+            } else{
+                interimArray[i] = Integer.parseInt(digitsArray[i]);
+            }
+        }
+
+        int sumOfDigits = 0;
+        //subtract 9 to numbers over 9
+        for (int i = 0; i < interimArray.length; i++) {
+            if(interimArray[i] > 9) interimArray[i] = interimArray[i] - 9;
+            sumOfDigits += interimArray[i];
+        }
+
+        return sumOfDigits % 10 == 0 ? 0 : 10 - sumOfDigits % 10;
+    }
 }
 
 class BankService {
