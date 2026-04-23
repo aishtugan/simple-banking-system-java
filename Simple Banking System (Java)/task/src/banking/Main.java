@@ -150,11 +150,8 @@ class Account {
             sb.append(digit);
         }
 
-        int checksum = rand.nextInt(10); //for the first step
-//        for (int i = 0; i < bankingSystem.cardCode.length() - bankBIN.length() - 1; i++) {
-//
-//        }
-
+//       int checksum = rand.nextInt(10); //for the first step
+        int checksum = getCardControlSumByLuhn(sb.toString());
         this.cardNumber = sb.append(checksum).toString();
     }
 
