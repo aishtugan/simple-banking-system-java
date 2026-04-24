@@ -1,13 +1,11 @@
 
 package banking;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Random;
+import java.sql.*;
+import java.util.*;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException {
 
         Scanner sc = new Scanner(System.in);
 
@@ -22,6 +20,20 @@ public class Main {
         Account currentAccount = null;
 
         boolean continueLoop = true;
+
+        String dbFileName = null;
+        if (args.length > 0) {
+            for (int i = 0; i < args.length - 1; i++) {
+                if ("-fileName".equals(args[i])) {
+                    dbFileName = args[i + 1];
+                    break;
+                }
+            }
+        }
+
+        Connection con = DatabaseManager.getConnection(dbFileName);
+
+        bankService.createAccountTable(con);
 
         while(continueLoop){
 
@@ -47,6 +59,7 @@ public class Main {
                             System.out.println(account.pin);
                             System.out.println();
                             bankService.accounts.add(account);
+                            bankService.saveAccountToDB(con, account);
                             break;
 
                         case "1. Balance":
@@ -62,7 +75,7 @@ public class Main {
 
                             System.out.println("Enter your card number:");
                             String inputCardNumber = sc.next();
-                            Account foundAccount = bankService.findAccount(inputCardNumber);
+                            Account foundAccount = bankService.findAccount(con, inputCardNumber);
                             System.out.println("Enter your PIN:");
                             String inputPIN = sc.next();
                             System.out.println();
@@ -101,6 +114,105 @@ public class Main {
                     System.out.println("Wrong choice!");
             }
 
+        }
+
+        DatabaseManager.closeConnection(con);
+    }
+}
+
+class DatabaseManager {
+    private static final String dbPath = "Simple Banking System (Java)/task/db/simplebanksystem.s3db";
+    private static final String dbUrl = "jdbc:sqlite:";
+
+    public static Connection getConnection(String dbFileName) throws SQLException {
+        Connection conn = null;
+        try {
+            conn = DriverManager.getConnection(dbUrl + (dbFileName == null ? dbPath : dbFileName));
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return conn;
+    }
+
+    public static void closeConnection(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.close();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public static void createTable(Connection conn, String tableName, Map columns) {
+
+        String sqlCommand = "CREATE TABLE IF NOT EXISTS " + tableName + " (";
+        for (Object key : columns.keySet()) {
+            sqlCommand += "     " + key + " " + columns.get(key) + ",";
+        }
+        sqlCommand = sqlCommand.substring(0, sqlCommand.length() - 1).concat(");");
+
+        try {
+            Statement stmt = conn.createStatement();
+            stmt.execute(sqlCommand);
+            closeStatement(stmt);
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public static void insertRow(Connection conn, String table, List<String> columns, List<Object> values) throws SQLException {
+        if (columns.size() != values.size()) {
+            throw new IllegalArgumentException("Columns and values must have the same size");
+        }
+
+        String columnPart = String.join(", ", columns);
+        String placeholders = String.join(", ", Collections.nCopies(values.size(), "?"));
+        String sqlString = "INSERT INTO " + table + " (" + columnPart + ") VALUES (" + placeholders + ")";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sqlString)) {
+            for (int i = 0; i < values.size(); i++) {
+                stmt.setObject(i + 1, values.get(i));
+            }
+            stmt.executeUpdate();
+        }
+    }
+
+    public static List<Account> findAccountsByParameters(Connection conn, String table, Map parameters) throws SQLException {
+        List<Account> accounts = new ArrayList<>();
+        List<Object>  values = new ArrayList<>();
+        String sql = "SELECT * FROM " + table + " WHERE ";
+        int i = 1;
+        for (Object key : parameters.keySet()) {
+            sql += key + " = " + parameters.get(key);
+            i++;
+            if (i < parameters.size()) {
+                sql.concat(" AND ");
+            }
+        }
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql);
+
+            ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                Account account = new Account(rs.getString("number"), rs.getString("pin"), rs.getInt("balance"));
+                accounts.add(account);
+            }
+        }
+
+        return accounts;
+    }
+
+    public static void closeStatement(Statement stmt) {
+        if (stmt != null) {
+            try {
+                stmt.close();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }
@@ -198,17 +310,46 @@ class BankService {
     public final String bankBIN = "400000";
     public final int cardNumberOfDigits = 16;
     public final int pinNumberOfDigits = 4;
+    public final String accountDBName = "card";
 
     List<Account> accounts = new ArrayList<>();
     List<BankingSystem> bankingSystems = new ArrayList<>();
 
-    Account findAccount(String cardNumber) {
-        for (Account account : accounts) {
-            if (account.cardNumber.equals(cardNumber)) {
-                return account;
-            }
+    Account findAccount(Connection conn, String cardNumber) throws SQLException {
+
+        Map parameters = new HashMap();
+        parameters.put("number", cardNumber);
+
+        List<Account> foundAccounts = DatabaseManager.findAccountsByParameters(conn, accountDBName, parameters);
+        for (Account account : foundAccounts) {
+            return account;
         }
         return null;
+    }
+
+    void saveAccountToDB(Connection conn, Account account) throws SQLException {
+
+        Map parameters = new HashMap();
+        parameters.put("number", account.cardNumber);
+
+        List<Account> foundAccounts = DatabaseManager.findAccountsByParameters(conn, accountDBName, parameters);
+
+        if (!foundAccounts.isEmpty()) {return;}
+
+        DatabaseManager.insertRow(conn, accountDBName, List.of("number", "pin", "balance"), List.of(account.cardNumber, account.pin, account.balance));
+
+    }
+
+    void createAccountTable(Connection conn) throws SQLException {
+
+        Map columns = new HashMap();
+
+        columns.put("id", "INTEGER PRIMARY KEY");
+        columns.put("number", "TEXT UNIQUE NOT NULL");
+        columns.put("pin", "TEXT NOT NULL");
+        columns.put("balance", "INTEGER NOT NULL DEFAULT 0");
+
+        DatabaseManager.createTable(conn, accountDBName, columns);
     }
 
     boolean pinIsCorrect(Account account, String pin) {

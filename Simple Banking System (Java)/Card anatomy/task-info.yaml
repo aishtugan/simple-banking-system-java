@@ -4,6 +4,7 @@ files:
     visible: true
     learner_created: false
   - name: test/SimpleBankSystemTest.java
+    visible: true
     learner_created: false
 feedback_link: https://hyperskill.org/projects/93/stages/515/implement#comment
 status: Solved

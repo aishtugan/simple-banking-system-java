@@ -4,7 +4,18 @@ files:
     visible: true
     learner_created: false
   - name: test/SimpleBankSystemTest.java
+    visible: true
     learner_created: false
+  - name: db/simplebanksystem.s3db
+    visible: true
+    learner_created: true
+  - name: card.s3db
+    visible: true
+    is_binary: true
+    learner_created: true
 feedback_link: https://hyperskill.org/projects/93/stages/517/implement#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations!
+  time: "Fri, 24 Apr 2026 02:43:56 UTC"
 record: -1

@@ -4,7 +4,11 @@ files:
     visible: true
     learner_created: false
   - name: test/SimpleBankSystemTest.java
+    visible: true
     learner_created: false
 feedback_link: https://hyperskill.org/projects/93/stages/516/implement#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations!
+  time: "Thu, 23 Apr 2026 01:48:35 UTC"
 record: -1
