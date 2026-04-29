@@ -6,6 +6,14 @@ files:
   - name: test/SimpleBankSystemTest.java
     visible: true
     learner_created: false
+  - name: card.s3db
+    visible: true
+    is_binary: true
+    learner_created: true
 feedback_link: https://hyperskill.org/projects/93/stages/518/implement#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Well done! You've finished the project. Select a new project on <a href="https://hyperskill.org/projects">Hyperskill</a>
+    to continue learning.
+  time: "Wed, 29 Apr 2026 04:00:00 UTC"
 record: -1
